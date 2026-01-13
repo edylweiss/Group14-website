@@ -1,12 +1,13 @@
-import { DRACOLoader } from "../libs/three.js-r132/examples/jsm/loaders/DRACOLoader.js";
-import { GLTFLoader } from "../libs/three.js-r132/examples/jsm/loaders/GLTFLoader.js";
+// Paths updated to look in the current folder where your files are uploaded
+import { DRACOLoader } from "./DRACOLoader.js";
+import { GLTFLoader } from "./GLTFLoader.js";
 
 const THREE = window.MINDAR.IMAGE.THREE;
 
 // --- CONFIGURATION ---
 const DEFAULT_SCALE = { x: 0.15, y: 0.15, z: 0.15 };
 const DEFAULT_POS = { x: 0, y: -0.4, z: 0 };
-const allModels = []; // For Interaction tracking
+const allModels = []; 
 
 const getLanguageFromURL = () => {
     const params = new URLSearchParams(window.location.search);
@@ -16,14 +17,16 @@ const getLanguageFromURL = () => {
 const initializeMindAR = () => {
   return new window.MINDAR.IMAGE.MindARThree({
     container: document.body,
-    imageTargetSrc: '../assets/targets/grp14.mind', 
+    // Path updated to find grp14.mind in your main folder
+    imageTargetSrc: './grp14.mind', 
   });
 };
 
 const configureGLTFLoader = () => {
   const loader = new GLTFLoader();
   const dracoLoader = new DRACOLoader();
-  dracoLoader.setDecoderPath('../libs/three.js-r132/examples/js/libs/draco/'); 
+  // Updated to current folder
+  dracoLoader.setDecoderPath('./'); 
   loader.setDRACOLoader(dracoLoader);
   return loader;
 };
@@ -44,7 +47,6 @@ const setupPage = async (mindarThree, pageIndex, modelPath, audioPath, config) =
   model.scene.scale.set(s.x, s.y, s.z);
   model.scene.position.set(p.x, p.y, p.z);
   
-  // Tag for interaction system
   model.scene.userData.isInteractable = true;
   model.scene.userData.audio = new Audio(audioPath);
   
@@ -100,14 +102,12 @@ const initInteractionSystem = (camera, renderer) => {
     const pos = getPos(e);
     prevPos = pos;
 
-    // Handle Pinch Start
     if (e.touches && e.touches.length === 2) {
       initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
       if (currentModel) initialScale = currentModel.scale.x;
       return;
     }
 
-    // Raycast to find model
     mouse.x = (pos.x / window.innerWidth) * 2 - 1;
     mouse.y = -(pos.y / window.innerHeight) * 2 + 1;
     raycaster.setFromCamera(mouse, camera);
@@ -121,12 +121,11 @@ const initInteractionSystem = (camera, renderer) => {
         currentModel = obj;
         isDragging = true;
 
-        // CLICK INTERACTION: Toggle Play/Pause
         const actions = currentModel.userData.actions;
         const audio = currentModel.userData.audio;
         if (actions) {
-            actions.forEach(a => a.paused = !a.paused);
-            if (audio.paused) audio.play().catch(()=>{}); else audio.pause();
+          actions.forEach(a => a.paused = !a.paused);
+          if (audio.paused) audio.play().catch(()=>{}); else audio.pause();
         }
       }
     }
@@ -135,7 +134,6 @@ const initInteractionSystem = (camera, renderer) => {
   const onMove = (e) => {
     if (!currentModel || !currentModel.visible) return;
 
-    // PINCH ZOOM
     if (e.touches && e.touches.length === 2) {
       const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
       const zoom = dist / initialPinchDist;
@@ -144,7 +142,6 @@ const initInteractionSystem = (camera, renderer) => {
       return;
     }
 
-    // ROTATION
     if (!isDragging) return;
     const pos = getPos(e);
     currentModel.rotation.y += (pos.x - prevPos.x) * 0.01;
@@ -183,8 +180,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const pageMixers = [];
 
     for (let i = 1; i <= 11; i++) {
-        const modelPath = `../assets/models/page${i}/page${i}.glb`;
-        const audioPath = `../assets/audio/${language}/page ${i}.mp3`;
+        // Updated to find .glb and .mp3 files in the root folder
+        const modelPath = `./page${i}.glb`; 
+        const audioPath = `./page ${i}.mp3`; 
         try {
             const result = await setupPage(mindarThree, i - 1, modelPath, audioPath, { scale: DEFAULT_SCALE, position: DEFAULT_POS });
             pageMixers.push(result.mixer);
@@ -194,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const overlay = document.getElementById('loading-overlay');
     if (overlay) overlay.style.display = 'none';
 
-    initInteractionSystem(camera, renderer); // Start the interaction system
+    initInteractionSystem(camera, renderer); 
 
     await mindarThree.start();
     renderer.setAnimationLoop(() => {
